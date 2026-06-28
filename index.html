@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SHART — Hashprint Studio</title>
+  <style>
+    :root {
+      --bg: #06070b;
+      --bg2: #0d1020;
+      --panel: rgba(14, 18, 32, 0.82);
+      --panel2: rgba(22, 28, 48, 0.94);
+      --text: #eef4ff;
+      --muted: #9da9bd;
+      --soft: #c6d4ef;
+      --accent: #7df8ff;
+      --accent2: #ff5dd8;
+      --good: #92ffb6;
+      --warn: #ffd166;
+      --bad: #ff6b7a;
+      --line: rgba(255,255,255,0.13);
+      --shadow: rgba(0, 0, 0, 0.52);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(125,248,255,0.18), transparent 34%),
+        radial-gradient(circle at 85% 15%, rgba(255,93,216,0.15), transparent 36%),
+        radial-gradient(circle at 50% 100%, rgba(105,92,255,0.22), transparent 40%),
+        linear-gradient(135deg, #05060a 0%, #0b1020 48%, #05060a 100%);
+      color: var(--text);
+      font-family: var(--sans);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.32;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+    }
+
+    .app {
+      width: min(1540px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 22px 0 32px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 62px);
+      letter-spacing: -0.06em;
+      line-height: 0.92;
+    }
+
+    .tagline {
+      margin: 12px 0 0;
+      max-width: 880px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .tagline strong { color: var(--text); }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 390px minmax(520px, 1fr) 360px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.028));
+      box-shadow: 0 24px 70px var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
+
+    .card-pad { padding: 16px; }
+
+    .section-title {
+      margin: 0 0 10px;
+      color: var(--soft);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .mode-row, .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button, select, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      min-height: 40px;
+      padding: 9px 11px;
+      cursor: pointer;
+      font-weight: 760;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, filter 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(125,248,255,0.62);
+      background: rgba(125,248,255,0.1);
+    }
+
+    button:active:not(:disabled) { transform: translateY(1px); }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, rgba(125,248,255,0.22), rgba(255,93,216,0.17));
+      border-color: rgba(125,248,255,0.36);
+    }
+
+    .danger {
+      background: rgba(255,107,122,0.12);
+      border-color: rgba(255,107,122,0.32);
+    }
+
+    .mode-btn.active {
+      color: #061015;
+      background: linear-gradient(135deg, #7df8ff, #ff8be5);
+      border-color: rgba(255,255,255,0.7);
+    }
+
+    label {
+      display: block;
+      margin: 11px 0 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    textarea, select, input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.22);
+      color: var(--text);
+      outline: none;
+      padding: 12px;
+      transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    }
+
+    textarea {
+      min-height: 124px;
+      resize: vertical;
+      line-height: 1.42;
+    }
+
+    select { min-height: 42px; }
+
+    textarea:focus, select:focus, input:focus {
+      border-color: rgba(125,248,255,0.64);
+      box-shadow: 0 0 0 4px rgba(125,248,255,0.10);
+      background: rgba(0,0,0,0.28);
+    }
+
+    .tiny {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 8px 0 0;
+    }
+
+    .dropzone {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 134px;
+      padding: 16px;
+      border: 1px dashed rgba(125,248,255,0.36);
+      border-radius: 16px;
+      background: rgba(125,248,255,0.055);
+      text-align: center;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease, border-color 120ms ease;
+    }
+
+    .dropzone.drag {
+      transform: scale(1.01);
+      border-color: rgba(255,93,216,0.72);
+      background: rgba(255,93,216,0.10);
+    }
+
+    .dropzone input { display: none; }
+    .dropzone b { color: var(--text); }
+
+    .hidden { display: none !important; }
+
+    .stage-card {
+      position: sticky;
+      top: 14px;
+    }
+
+    .stage-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+    }
+
+    .stage-title {
+      min-width: 0;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      background: rgba(0,0,0,0.18);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--good);
+      box-shadow: 0 0 18px var(--good);
+    }
+
+    .canvas-wrap {
+      padding: 14px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      background: #05060a;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.62);
+    }
+
+    .hash-box {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(0,0,0,0.22);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .hash-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 850;
+      margin-bottom: 7px;
+    }
+
+    .hash-text {
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.45;
+      word-break: break-all;
+    }
+
+    .hex-strip {
+      display: grid;
+      grid-template-columns: repeat(16, minmax(0, 1fr));
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .hex-cell {
+      min-width: 0;
+      height: 20px;
+      border-radius: 5px;
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,0.88);
+      font-family: var(--mono);
+      font-size: 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 10px 0 12px;
+    }
+
+    .metric {
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .metric .num {
+      font-size: 25px;
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .metric .cap {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .bar {
+      height: 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.28);
+      margin: 8px 0 0;
+    }
+
+    .bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--warn));
+      border-radius: inherit;
+      transition: width 260ms ease;
+    }
+
+    .dna-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .dna-item {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.045);
+      font-size: 12px;
+    }
+
+    .dna-key {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .dna-val {
+      min-width: 0;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .thumb {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.25);
+      cursor: pointer;
+      aspect-ratio: 1 / 1;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb span {
+      position: absolute;
+      inset: auto 4px 4px 4px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.58);
+      color: white;
+      padding: 3px 5px;
+      font-size: 9px;
+      font-family: var(--mono);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 30;
+      padding: 11px 14px;
+      border: 1px solid rgba(125,248,255,0.32);
+      border-radius: 999px;
+      background: rgba(7, 10, 18, 0.92);
+      color: var(--text);
+      box-shadow: 0 18px 48px rgba(0,0,0,0.48);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 1250px) {
+      .layout { grid-template-columns: 360px minmax(420px, 1fr); }
+      .right-col { grid-column: 1 / -1; }
+      .right-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    }
+
+    @media (max-width: 900px) {
+      header { grid-template-columns: 1fr; }
+      .top-actions { justify-content: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .stage-card { position: static; }
+      .right-inner { display: block; }
+    }
+
+    @media (max-width: 560px) {
+      .app { width: min(100vw - 18px, 1540px); padding-top: 12px; }
+      .mode-row, .button-row, .metrics { grid-template-columns: 1fr; }
+      .hex-strip { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+      .dna-item { grid-template-columns: 1fr; }
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <h1>SHART</h1>
+        <p class="tagline"><strong>Secure Hash Abstract Rendering Toy.</strong> Turn text or files into deterministic visual fingerprints, then test how tiny changes mutate the hash and the image.</p>
+      </div>
+      <div class="top-actions">
+        <span class="pill"><span class="dot"></span><span id="statusText">ready</span></span>
+        <button id="randomBtn" type="button">Random phrase</button>
+        <button id="mutationBtn" type="button" class="primary">Mutation test</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="card card-pad">
+        <p class="section-title">Specimen input</p>
+        <div class="mode-row" role="group" aria-label="Input mode">
+          <button class="mode-btn active" data-mode="solo" type="button">Text</button>
+          <button class="mode-btn" data-mode="compare" type="button">Compare</button>
+          <button class="mode-btn" data-mode="file" type="button">File</button>
+        </div>
+
+        <div id="textPanel">
+          <label for="inputA">Input A</label>
+          <textarea id="inputA" spellcheck="false">Type something small. Then change one letter.</textarea>
+        </div>
+
+        <div id="comparePanel" class="hidden">
+          <label for="inputB">Input B</label>
+          <textarea id="inputB" spellcheck="false">Type something small. Then change one letter!</textarea>
+          <p class="tiny">Compare mode shows whether two similar-looking inputs produce radically different fingerprints.</p>
+        </div>
+
+        <div id="filePanel" class="hidden">
+          <label>File specimen</label>
+          <div class="dropzone" id="dropzone">
+            <input id="fileInput" type="file" />
+            <div>
+              <b>Drop a file here</b><br />or click to choose one.<br />
+              <span id="fileMeta">No file loaded yet.</span>
+            </div>
+          </div>
+          <p class="tiny">The file is hashed inside your browser. It is not uploaded anywhere.</p>
+        </div>
+
+        <label for="styleSelect">Art engine</label>
+        <select id="styleSelect">
+          <option value="cathedral">Glitch Cathedral</option>
+          <option value="bauhaus">Bauhaus Blocks</option>
+          <option value="stained">Stained Glass</option>
+          <option value="topographic">Topographic Signal</option>
+          <option value="circuit">Circuit Relic</option>
+          <option value="cosmic">Cosmic Dust</option>
+          <option value="mask">Picasso Mask</option>
+          <option value="glitch">Data Glitch</option>
+        </select>
+
+        <div class="button-row" style="margin-top:14px;">
+          <button id="generateBtn" type="button" class="primary">Generate</button>
+          <button id="copyBtn" type="button">Copy hash</button>
+          <button id="downloadBtn" type="button">PNG</button>
+        </div>
+        <div class="button-row">
+          <button id="saveBtn" type="button">Save print</button>
+          <button id="clearBtn" type="button" class="danger">Clear gallery</button>
+          <button id="resetBtn" type="button">Reset</button>
+        </div>
+
+        <p class="footer-note">This is an educational visualiser, not a professional security tool. It makes digital fingerprints visible, but it should not be used as the only way to verify important files.</p>
+      </aside>
+
+      <section class="card stage-card">
+        <div class="stage-top">
+          <div class="stage-title" id="stageTitle">Hashprint canvas</div>
+          <span class="pill" id="modePill">Text mode</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="artCanvas" width="1400" height="1400" aria-label="Generated hash artwork"></canvas>
+        </div>
+      </section>
+
+      <aside class="right-col">
+        <div class="right-inner">
+          <section class="card card-pad">
+            <p class="section-title">Hash fingerprint</p>
+            <div class="hash-box">
+              <div class="hash-label"><span>SHA-256 A</span><span id="hashASize">64 hex</span></div>
+              <div id="hashA" class="hash-text"></div>
+              <div id="stripA" class="hex-strip"></div>
+            </div>
+            <div id="hashBBox" class="hash-box hidden">
+              <div class="hash-label"><span>SHA-256 B</span><span>64 hex</span></div>
+              <div id="hashB" class="hash-text"></div>
+              <div id="stripB" class="hex-strip"></div>
+            </div>
+
+            <div id="diffPanel" class="hidden">
+              <p class="section-title">Avalanche test</p>
+              <div class="metrics">
+                <div class="metric"><div class="num" id="bitDiff">0</div><div class="cap">bits changed out of 256</div></div>
+                <div class="metric"><div class="num" id="hexDiff">0</div><div class="cap">hex characters changed out of 64</div></div>
+              </div>
+              <div class="bar"><i id="diffBar"></i></div>
+              <p class="tiny" id="diffNote">Compare two inputs to see the avalanche effect.</p>
+            </div>
+          </section>
+
+          <section class="card card-pad">
+            <p class="section-title">Fingerprint DNA</p>
+            <div id="dnaList" class="dna-list"></div>
+            <p class="section-title" style="margin-top:16px;">Local gallery</p>
+            <div id="gallery" class="gallery-grid"></div>
+          </section>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast">Done</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const canvas = $('artCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const els = {
+      inputA: $('inputA'), inputB: $('inputB'),
+      textPanel: $('textPanel'), comparePanel: $('comparePanel'), filePanel: $('filePanel'),
+      fileInput: $('fileInput'), dropzone: $('dropzone'), fileMeta: $('fileMeta'),
+      styleSelect: $('styleSelect'), generateBtn: $('generateBtn'), randomBtn: $('randomBtn'), mutationBtn: $('mutationBtn'),
+      copyBtn: $('copyBtn'), downloadBtn: $('downloadBtn'), saveBtn: $('saveBtn'), clearBtn: $('clearBtn'), resetBtn: $('resetBtn'),
+      hashA: $('hashA'), hashB: $('hashB'), stripA: $('stripA'), stripB: $('stripB'), hashBBox: $('hashBBox'),
+      diffPanel: $('diffPanel'), bitDiff: $('bitDiff'), hexDiff: $('hexDiff'), diffBar: $('diffBar'), diffNote: $('diffNote'),
+      dnaList: $('dnaList'), gallery: $('gallery'), statusText: $('statusText'), stageTitle: $('stageTitle'), modePill: $('modePill'), toast: $('toast')
+    };
+
+    const state = {
+      mode: 'solo',
+      hashA: '',
+      hashB: '',
+      fileName: '',
+      fileBytes: null,
+      renderCounter: 0,
+      gallery: []
+    };
+
+    const phrases = [
+      'The same message always makes the same fingerprint.',
+      'A single changed letter can flip half the bits.',
+      'Not magic: deterministic chaos from a cryptographic hash.',
+      'This document has a visual ghost.',
+      'Tiny mutation, giant avalanche.',
+      'Digital sameness is stricter than human sameness.',
+      'Every file carries a hidden fingerprint.',
+      'Hash first, paint second, doubt everything.'
+    ];
+
+    const styleNames = {
+      cathedral: 'Glitch Cathedral', bauhaus: 'Bauhaus Blocks', stained: 'Stained Glass', topographic: 'Topographic Signal',
+      circuit: 'Circuit Relic', cosmic: 'Cosmic Dust', mask: 'Picasso Mask', glitch: 'Data Glitch'
+    };
+
+    boot();
+
+    function boot() {
+      loadGallery();
+      bindEvents();
+      updateMode('solo');
+      generate();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.addEventListener('click', () => updateMode(btn.dataset.mode)));
+      [els.inputA, els.inputB].forEach(el => el.addEventListener('input', debounce(generate, 180)));
+      els.styleSelect.addEventListener('change', generate);
+      els.generateBtn.addEventListener('click', generate);
+      els.randomBtn.addEventListener('click', randomPhrase);
+      els.mutationBtn.addEventListener('click', mutationTest);
+      els.copyBtn.addEventListener('click', copyHash);
+      els.downloadBtn.addEventListener('click', downloadPNG);
+      els.saveBtn.addEventListener('click', savePrint);
+      els.clearBtn.addEventListener('click', clearGallery);
+      els.resetBtn.addEventListener('click', resetApp);
+
+      els.dropzone.addEventListener('click', () => els.fileInput.click());
+      els.fileInput.addEventListener('change', () => loadFile(els.fileInput.files[0]));
+      ['dragenter', 'dragover'].forEach(type => els.dropzone.addEventListener(type, (event) => {
+        event.preventDefault(); els.dropzone.classList.add('drag');
+      }));
+      ['dragleave', 'drop'].forEach(type => els.dropzone.addEventListener(type, (event) => {
+        event.preventDefault(); els.dropzone.classList.remove('drag');
+      }));
+      els.dropzone.addEventListener('drop', (event) => loadFile(event.dataTransfer.files[0]));
+    }
+
+    function updateMode(mode) {
+      state.mode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+      els.comparePanel.classList.toggle('hidden', mode !== 'compare');
+      els.filePanel.classList.toggle('hidden', mode !== 'file');
+      els.textPanel.classList.toggle('hidden', mode === 'file');
+      els.hashBBox.classList.toggle('hidden', mode !== 'compare');
+      els.diffPanel.classList.toggle('hidden', mode !== 'compare');
+      els.modePill.textContent = mode === 'solo' ? 'Text mode' : mode === 'compare' ? 'Mutation comparison' : 'File specimen';
+      generate();
+    }
+
+    async function generate() {
+      state.renderCounter++;
+      const current = state.renderCounter;
+      setStatus('hashing');
+
+      if (state.mode === 'file') {
+        if (!state.fileBytes) {
+          state.hashA = sha256Bytes(utf8Bytes('Drop a file to create its hashprint.'));
+          els.stageTitle.textContent = 'Waiting for file specimen';
+        } else {
+          state.hashA = sha256Bytes(state.fileBytes);
+          els.stageTitle.textContent = state.fileName || 'File specimen';
+        }
+        state.hashB = '';
+      } else if (state.mode === 'compare') {
+        state.hashA = sha256Text(els.inputA.value);
+        state.hashB = sha256Text(els.inputB.value);
+        els.stageTitle.textContent = 'Mutation comparison';
+      } else {
+        state.hashA = sha256Text(els.inputA.value);
+        state.hashB = '';
+        els.stageTitle.textContent = 'Text hashprint';
+      }
+
+      if (current !== state.renderCounter) return;
+      updateHashPanels();
+      draw();
+      setStatus('ready');
+    }
+
+    function draw() {
+      const style = els.styleSelect.value;
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+
+      if (state.mode === 'compare') {
+        drawCompareBackground();
+        drawHashArt(ctx, state.hashA, style, 44, 70, W / 2 - 66, H - 140, 'A');
+        drawHashArt(ctx, state.hashB, style, W / 2 + 22, 70, W / 2 - 66, H - 140, 'B');
+        drawCompareOverlay();
+      } else {
+        drawHashArt(ctx, state.hashA, style, 0, 0, W, H, state.mode === 'file' ? 'FILE' : 'TEXT');
+      }
+    }
+
+    function drawCompareBackground() {
+      const W = canvas.width, H = canvas.height;
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, '#05060a'); g.addColorStop(0.5, '#101429'); g.addColorStop(1, '#05060a');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(W / 2 - 1, 42, 2, H - 84);
+    }
+
+    function drawCompareOverlay() {
+      const W = canvas.width, H = canvas.height;
+      const stats = compareHashes(state.hashA, state.hashB);
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      roundRect(ctx, W / 2 - 210, H - 94, 420, 54, 18); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.stroke();
+      ctx.fillStyle = '#eef4ff';
+      ctx.font = '900 24px ui-sans-serif, system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${stats.bits}/256 bits changed · ${stats.percent}%`, W / 2, H - 60);
+      ctx.fillStyle = 'rgba(238,244,255,0.6)';
+      ctx.font = '700 16px ui-sans-serif, system-ui';
+      ctx.fillText('Avalanche difference', W / 2, H - 28);
+      ctx.restore();
+    }
+
+    function drawHashArt(c, hash, style, x, y, w, h, label) {
+      const bytes = hashToBytes(hash);
+      const seed = parseInt(hash.slice(0, 8), 16) ^ parseInt(hash.slice(56, 64), 16);
+      const rng = mulberry32(seed >>> 0);
+      const palette = makePalette(bytes);
+
+      c.save();
+      c.beginPath(); c.rect(x, y, w, h); c.clip();
+      drawBase(c, x, y, w, h, palette, bytes, rng);
+
+      const map = {
+        cathedral: drawCathedral, bauhaus: drawBauhaus, stained: drawStained,
+        topographic: drawTopographic, circuit: drawCircuit, cosmic: drawCosmic,
+        mask: drawMask, glitch: drawGlitch
+      };
+      map[style](c, x, y, w, h, bytes, rng, palette);
+      drawFrame(c, x, y, w, h, hash, label, palette);
+      c.restore();
+    }
+
+    function drawBase(c, x, y, w, h, palette, bytes, rng) {
+      const g = c.createRadialGradient(x + w * (0.25 + rng() * 0.5), y + h * (0.18 + rng() * 0.55), 10, x + w / 2, y + h / 2, Math.max(w, h));
+      g.addColorStop(0, palette.glow);
+      g.addColorStop(0.38, palette.bg2);
+      g.addColorStop(1, palette.bg);
+      c.fillStyle = g;
+      c.fillRect(x, y, w, h);
+
+      c.globalAlpha = 0.22;
+      c.strokeStyle = 'rgba(255,255,255,0.08)';
+      c.lineWidth = Math.max(1, w / 360);
+      const step = w / (10 + bytes[4] % 9);
+      for (let gx = x - step; gx < x + w + step; gx += step) { c.beginPath(); c.moveTo(gx, y); c.lineTo(gx + h * 0.08, y + h); c.stroke(); }
+      for (let gy = y - step; gy < y + h + step; gy += step) { c.beginPath(); c.moveTo(x, gy); c.lineTo(x + w, gy + w * 0.05); c.stroke(); }
+      c.globalAlpha = 1;
+    }
+
+    function drawCathedral(c, x, y, w, h, bytes, rng, p) {
+      const cx = x + w / 2, cy = y + h * 0.54;
+      const rays = 18 + bytes[3] % 22;
+      c.save();
+      c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < rays; i++) {
+        const a = -Math.PI / 2 + (i / (rays - 1) - 0.5) * Math.PI * 1.22;
+        const len = h * (0.55 + rng() * 0.55);
+        const x2 = cx + Math.cos(a) * len;
+        const y2 = cy + Math.sin(a) * len;
+        const g = c.createLinearGradient(cx, cy, x2, y2);
+        g.addColorStop(0, hsla((p.hue + i * 17) % 360, 95, 68, 0.48));
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        c.strokeStyle = g;
+        c.lineWidth = w * (0.004 + rng() * 0.013);
+        c.beginPath(); c.moveTo(cx, cy); c.lineTo(x2, y2); c.stroke();
+      }
+      c.globalCompositeOperation = 'source-over';
+
+      const arches = 7 + bytes[5] % 9;
+      for (let i = 0; i < arches; i++) {
+        const aw = w * (0.15 + i * 0.045 + rng() * 0.02);
+        const ah = h * (0.24 + i * 0.055);
+        c.strokeStyle = hsla((p.hue + bytes[i] + i * 21) % 360, 85, 64, 0.66);
+        c.lineWidth = Math.max(2, w * (0.006 + rng() * 0.008));
+        c.beginPath();
+        c.moveTo(cx - aw, y + h * 0.84);
+        c.bezierCurveTo(cx - aw, cy - ah, cx + aw, cy - ah, cx + aw, y + h * 0.84);
+        c.stroke();
+      }
+
+      for (let i = 0; i < 44; i++) {
+        const bx = x + rng() * w, by = y + rng() * h;
+        const bw = w * (0.015 + rng() * 0.08), bh = h * (0.01 + rng() * 0.05);
+        c.fillStyle = hsla((p.hue + bytes[i % 32] * 2) % 360, 90, 58, 0.18 + rng() * 0.26);
+        c.save(); c.translate(bx, by); c.rotate((rng() - 0.5) * 0.7); roundRect(c, -bw / 2, -bh / 2, bw, bh, 8); c.fill(); c.restore();
+      }
+      c.restore();
+    }
+
+    function drawBauhaus(c, x, y, w, h, bytes, rng, p) {
+      const cols = 4 + bytes[2] % 5;
+      const rows = 4 + bytes[3] % 5;
+      const cw = w / cols, rh = h / rows;
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          const px = x + i * cw, py = y + j * rh;
+          const pad = Math.min(cw, rh) * 0.11;
+          const b = bytes[(i + j * cols) % 32];
+          c.fillStyle = [p.a, p.b, p.c, p.d, p.e][b % 5];
+          c.globalAlpha = 0.68 + rng() * 0.28;
+          c.save();
+          c.translate(px + cw / 2, py + rh / 2);
+          c.rotate(((b % 8) / 8) * Math.PI);
+          const kind = b % 4;
+          if (kind === 0) { roundRect(c, -cw / 2 + pad, -rh / 2 + pad, cw - pad * 2, rh - pad * 2, 16); c.fill(); }
+          if (kind === 1) { c.beginPath(); c.arc(0, 0, Math.min(cw, rh) * (0.22 + rng() * 0.25), 0, Math.PI * 2); c.fill(); }
+          if (kind === 2) { c.beginPath(); c.moveTo(-cw * 0.35, rh * 0.35); c.lineTo(0, -rh * 0.35); c.lineTo(cw * 0.35, rh * 0.35); c.closePath(); c.fill(); }
+          if (kind === 3) { c.fillRect(-cw * 0.06, -rh * 0.42, cw * 0.12, rh * 0.84); c.fillRect(-cw * 0.42, -rh * 0.06, cw * 0.84, rh * 0.12); }
+          c.restore();
+        }
+      }
+      c.globalAlpha = 1;
+      c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = Math.max(2, w / 180);
+      for (let i = 0; i <= cols; i++) { c.beginPath(); c.moveTo(x + i * cw, y); c.lineTo(x + i * cw, y + h); c.stroke(); }
+      for (let j = 0; j <= rows; j++) { c.beginPath(); c.moveTo(x, y + j * rh); c.lineTo(x + w, y + j * rh); c.stroke(); }
+    }
+
+    function drawStained(c, x, y, w, h, bytes, rng, p) {
+      const points = [];
+      const n = 38 + bytes[1] % 46;
+      for (let i = 0; i < n; i++) points.push([x + rng() * w, y + rng() * h]);
+      points.push([x, y], [x + w, y], [x, y + h], [x + w, y + h], [x + w / 2, y + h / 2]);
+
+      for (let i = 0; i < points.length; i++) {
+        const [px, py] = points[i];
+        const sides = 3 + bytes[i % 32] % 5;
+        const r = Math.min(w, h) * (0.045 + rng() * 0.12);
+        c.beginPath();
+        for (let s = 0; s < sides; s++) {
+          const a = (s / sides) * Math.PI * 2 + rng() * 0.12;
+          const rr = r * (0.62 + rng() * 0.55);
+          const vx = px + Math.cos(a) * rr;
+          const vy = py + Math.sin(a) * rr;
+          if (s === 0) c.moveTo(vx, vy); else c.lineTo(vx, vy);
+        }
+        c.closePath();
+        c.fillStyle = hsla((p.hue + bytes[i % 32] * 3 + i * 9) % 360, 82, 58, 0.48);
+        c.fill();
+        c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = Math.max(1, w / 250); c.stroke();
+      }
+
+      c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 16; i++) {
+        c.strokeStyle = hsla((p.hue + i * 28) % 360, 100, 75, 0.18);
+        c.lineWidth = Math.max(2, w * (0.002 + rng() * 0.006));
+        c.beginPath();
+        c.moveTo(x + rng() * w, y);
+        c.bezierCurveTo(x + rng() * w, y + rng() * h, x + rng() * w, y + rng() * h, x + rng() * w, y + h);
+        c.stroke();
+      }
+      c.globalCompositeOperation = 'source-over';
+    }
+
+    function drawTopographic(c, x, y, w, h, bytes, rng, p) {
+      const cx = x + w * (0.35 + bytes[0] / 255 * 0.3);
+      const cy = y + h * (0.35 + bytes[1] / 255 * 0.3);
+      const rings = 18 + bytes[2] % 24;
+      c.lineCap = 'round';
+      for (let r = 0; r < rings; r++) {
+        const radius = Math.min(w, h) * (0.045 + r * 0.022);
+        const steps = 100;
+        c.beginPath();
+        for (let i = 0; i <= steps; i++) {
+          const a = (i / steps) * Math.PI * 2;
+          const wobble = Math.sin(a * (2 + bytes[(r + 3) % 32] % 8) + bytes[r % 32]) * radius * 0.11 + Math.cos(a * (3 + bytes[(r + 9) % 32] % 7)) * radius * 0.08;
+          const px = cx + Math.cos(a) * (radius + wobble) * (1.05 + Math.sin(r) * 0.08);
+          const py = cy + Math.sin(a) * (radius + wobble) * (0.78 + Math.cos(r) * 0.08);
+          if (i === 0) c.moveTo(px, py); else c.lineTo(px, py);
+        }
+        c.strokeStyle = hsla((p.hue + r * 9 + bytes[r % 32]) % 360, 86, 64, 0.28 + (r / rings) * 0.42);
+        c.lineWidth = Math.max(1, w * (0.0025 + (bytes[r % 32] / 255) * 0.005));
+        c.stroke();
+      }
+      for (let i = 0; i < 140; i++) {
+        const px = x + rng() * w, py = y + rng() * h;
+        c.fillStyle = hsla((p.hue + bytes[i % 32]) % 360, 80, 72, 0.18 + rng() * 0.18);
+        c.fillRect(px, py, 1 + rng() * 3, 1 + rng() * 3);
+      }
+    }
+
+    function drawCircuit(c, x, y, w, h, bytes, rng, p) {
+      const grid = 14 + bytes[5] % 12;
+      const stepX = w / grid, stepY = h / grid;
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      for (let t = 0; t < 52; t++) {
+        let gx = Math.floor(rng() * grid), gy = Math.floor(rng() * grid);
+        c.beginPath(); c.moveTo(x + gx * stepX, y + gy * stepY);
+        const turns = 3 + bytes[t % 32] % 7;
+        for (let k = 0; k < turns; k++) {
+          if (rng() > 0.5) gx += rng() > 0.5 ? 1 : -1; else gy += rng() > 0.5 ? 1 : -1;
+          gx = clamp(gx, 1, grid - 1); gy = clamp(gy, 1, grid - 1);
+          c.lineTo(x + gx * stepX, y + gy * stepY);
+        }
+        c.strokeStyle = hsla((p.hue + bytes[t % 32] * 2) % 360, 95, 65, 0.35 + rng() * 0.38);
+        c.lineWidth = Math.max(2, w * (0.0025 + rng() * 0.0045));
+        c.stroke();
+        c.fillStyle = c.strokeStyle;
+        c.beginPath(); c.arc(x + gx * stepX, y + gy * stepY, w * (0.005 + rng() * 0.009), 0, Math.PI * 2); c.fill();
+      }
+      const chipW = w * (0.28 + bytes[10] / 255 * 0.16), chipH = h * (0.18 + bytes[11] / 255 * 0.14);
+      c.fillStyle = 'rgba(0,0,0,0.42)'; roundRect(c, x + w / 2 - chipW / 2, y + h / 2 - chipH / 2, chipW, chipH, 22); c.fill();
+      c.strokeStyle = p.a; c.lineWidth = Math.max(3, w / 150); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,0.72)'; c.font = `900 ${Math.max(16, w / 30)}px ${getComputedStyle(document.body).fontFamily}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(bytes.slice(0, 4).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase(), x + w / 2, y + h / 2);
+    }
+
+    function drawCosmic(c, x, y, w, h, bytes, rng, p) {
+      c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 900; i++) {
+        const a = rng() * Math.PI * 2;
+        const rr = Math.pow(rng(), 0.55) * Math.min(w, h) * 0.57;
+        const swirl = rr * 0.0009 * (bytes[7] - 128);
+        const px = x + w / 2 + Math.cos(a + swirl) * rr * (1.0 + Math.sin(a * 3) * 0.12);
+        const py = y + h / 2 + Math.sin(a + swirl) * rr * (0.72 + Math.cos(a * 2) * 0.1);
+        const s = 0.7 + rng() * (bytes[i % 32] / 255 * 3.2 + 1.2);
+        c.fillStyle = hsla((p.hue + bytes[i % 32] * 2 + i * 0.3) % 360, 95, 72, 0.10 + rng() * 0.38);
+        c.beginPath(); c.arc(px, py, s, 0, Math.PI * 2); c.fill();
+      }
+      for (let i = 0; i < 12; i++) {
+        const g = c.createRadialGradient(x + rng() * w, y + rng() * h, 0, x + rng() * w, y + rng() * h, w * (0.15 + rng() * 0.24));
+        g.addColorStop(0, hsla((p.hue + i * 31) % 360, 100, 70, 0.20));
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = g; c.fillRect(x, y, w, h);
+      }
+      c.globalCompositeOperation = 'source-over';
+    }
+
+    function drawMask(c, x, y, w, h, bytes, rng, p) {
+      const cx = x + w / 2, cy = y + h / 2;
+      c.save();
+      c.translate(cx, cy);
+      c.rotate(((bytes[0] / 255) - 0.5) * 0.18);
+
+      c.fillStyle = p.a;
+      c.beginPath();
+      c.ellipse(0, 0, w * (0.22 + bytes[1] / 255 * 0.06), h * (0.32 + bytes[2] / 255 * 0.08), 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = p.b;
+      c.beginPath(); c.moveTo(-w * 0.03, -h * 0.34); c.bezierCurveTo(w * 0.27, -h * 0.26, w * 0.34, h * 0.12, w * 0.05, h * 0.37); c.bezierCurveTo(w * 0.16, h * 0.05, w * 0.12, -h * 0.14, -w * 0.03, -h * 0.34); c.fill();
+      c.fillStyle = p.c;
+      c.beginPath(); c.moveTo(-w * 0.06, -h * 0.32); c.bezierCurveTo(-w * 0.34, -h * 0.20, -w * 0.31, h * 0.20, -w * 0.04, h * 0.34); c.bezierCurveTo(-w * 0.17, h * 0.01, -w * 0.19, -h * 0.16, -w * 0.06, -h * 0.32); c.fill();
+
+      const eyeY = -h * (0.08 + bytes[6] / 255 * 0.06);
+      drawEye(c, -w * 0.10, eyeY, w, h, p.d, bytes[7] / 255);
+      drawEye(c, w * 0.12, eyeY + h * ((bytes[8] - 128) / 255 * 0.08), w, h, p.e, bytes[9] / 255);
+
+      c.fillStyle = 'rgba(0,0,0,0.56)';
+      c.beginPath(); c.moveTo(-w * 0.02, -h * 0.02); c.lineTo(w * (0.04 + bytes[10] / 255 * 0.06), h * 0.12); c.lineTo(-w * (0.05 + bytes[11] / 255 * 0.04), h * 0.16); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.72)'; c.lineWidth = Math.max(2, w / 150); c.stroke();
+
+      c.strokeStyle = 'rgba(0,0,0,0.64)'; c.lineWidth = Math.max(4, w / 90); c.beginPath();
+      c.moveTo(-w * 0.12, h * 0.22); c.quadraticCurveTo(0, h * (0.18 + bytes[12] / 255 * 0.08), w * 0.14, h * 0.20); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = Math.max(1, w / 220);
+      for (let i = 0; i < 17; i++) { c.beginPath(); c.moveTo(-w * 0.25 + rng() * w * 0.5, -h * 0.28 + rng() * h * 0.58); c.lineTo(-w * 0.25 + rng() * w * 0.5, -h * 0.28 + rng() * h * 0.58); c.stroke(); }
+      c.restore();
+
+      function drawEye(c, ex, ey, w, h, colour, ratio) {
+        c.save(); c.translate(ex, ey); c.rotate((ratio - 0.5) * 1.4);
+        c.fillStyle = 'rgba(255,255,255,0.86)'; c.beginPath(); c.ellipse(0, 0, w * 0.075, h * 0.042, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = colour; c.beginPath(); c.arc(0, 0, w * 0.025, 0, Math.PI * 2); c.fill();
+        c.fillStyle = 'rgba(0,0,0,0.78)'; c.beginPath(); c.arc(0, 0, w * 0.011, 0, Math.PI * 2); c.fill();
+        c.restore();
+      }
+    }
+
+    function drawGlitch(c, x, y, w, h, bytes, rng, p) {
+      const strips = 46 + bytes[0] % 54;
+      for (let i = 0; i < strips; i++) {
+        const sy = y + rng() * h;
+        const sh = h * (0.006 + rng() * 0.045);
+        const sx = x + (rng() - 0.5) * w * 0.18;
+        const sw = w * (0.55 + rng() * 0.7);
+        c.fillStyle = hsla((p.hue + bytes[i % 32] * 2 + i * 11) % 360, 95, 58, 0.15 + rng() * 0.44);
+        c.fillRect(sx, sy, sw, sh);
+      }
+      c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 28; i++) {
+        c.strokeStyle = hsla((p.hue + i * 19) % 360, 100, 72, 0.18 + rng() * 0.42);
+        c.lineWidth = Math.max(1, w * (0.002 + rng() * 0.008));
+        c.beginPath();
+        const y0 = y + rng() * h;
+        c.moveTo(x, y0);
+        for (let k = 0; k < 12; k++) c.lineTo(x + (k / 11) * w, y0 + (rng() - 0.5) * h * 0.16);
+        c.stroke();
+      }
+      c.globalCompositeOperation = 'source-over';
+      const blocks = 18 + bytes[5] % 22;
+      for (let i = 0; i < blocks; i++) {
+        c.strokeStyle = 'rgba(255,255,255,0.17)'; c.lineWidth = 1 + rng() * 3;
+        c.strokeRect(x + rng() * w, y + rng() * h, w * (0.04 + rng() * 0.18), h * (0.02 + rng() * 0.12));
+      }
+    }
+
+    function drawFrame(c, x, y, w, h, hash, label, p) {
+      c.save();
+      const lw = Math.max(3, w / 120);
+      c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = lw;
+      c.strokeRect(x + lw / 2, y + lw / 2, w - lw, h - lw);
+      c.strokeStyle = p.a; c.globalAlpha = 0.75; c.lineWidth = Math.max(1, w / 260);
+      c.strokeRect(x + w * 0.035, y + h * 0.035, w * 0.93, h * 0.93);
+      c.globalAlpha = 1;
+
+      c.fillStyle = 'rgba(0,0,0,0.42)';
+      roundRect(c, x + w * 0.045, y + h * 0.045, w * 0.54, Math.max(42, h * 0.055), 14); c.fill();
+      c.fillStyle = '#eef4ff'; c.textAlign = 'left'; c.textBaseline = 'middle';
+      c.font = `900 ${Math.max(13, w / 42)}px ui-sans-serif, system-ui`;
+      c.fillText(`${label} · ${hash.slice(0, 12).toUpperCase()}`, x + w * 0.07, y + h * 0.073);
+      c.fillStyle = 'rgba(238,244,255,0.68)'; c.font = `700 ${Math.max(9, w / 72)}px ui-monospace, monospace`;
+      c.fillText(hash.slice(12, 28).toUpperCase(), x + w * 0.07, y + h * 0.104);
+      c.restore();
+    }
+
+    function updateHashPanels() {
+      els.hashA.textContent = state.hashA;
+      renderStrip(els.stripA, state.hashA, state.hashB);
+      if (state.mode === 'compare') {
+        els.hashB.textContent = state.hashB;
+        renderStrip(els.stripB, state.hashB, state.hashA);
+        const stats = compareHashes(state.hashA, state.hashB);
+        els.bitDiff.textContent = stats.bits;
+        els.hexDiff.textContent = stats.hex;
+        els.diffBar.style.width = stats.percent + '%';
+        els.diffNote.textContent = stats.bits === 0 ? 'The two inputs are identical.' : `About ${stats.percent}% of the hash bits changed. For a strong hash, tiny input changes usually disturb roughly half the bits.`;
+      }
+      renderDNA();
+    }
+
+    function renderStrip(container, hash, compareHash = '') {
+      container.innerHTML = '';
+      [...hash].forEach((ch, i) => {
+        const v = parseInt(ch, 16);
+        const cell = document.createElement('span');
+        cell.className = 'hex-cell';
+        cell.textContent = ch;
+        const changed = compareHash && compareHash[i] !== ch;
+        cell.style.background = `linear-gradient(135deg, hsl(${v * 22.5}, 86%, ${changed ? 54 : 34}%), hsl(${(v * 22.5 + 80) % 360}, 84%, ${changed ? 42 : 25}%))`;
+        cell.style.outline = changed ? '1px solid rgba(255,255,255,0.55)' : 'none';
+        container.appendChild(cell);
+      });
+    }
+
+    function renderDNA() {
+      const bytes = hashToBytes(state.hashA);
+      const p = makePalette(bytes);
+      const items = [
+        ['Seed', state.hashA.slice(0, 8).toUpperCase()],
+        ['Art engine', styleNames[els.styleSelect.value]],
+        ['Hue family', `${Math.round(p.hue)}°`],
+        ['Geometry', ['sparse', 'balanced', 'dense', 'maximal'][bytes[2] % 4]],
+        ['Symmetry', ['none', 'mirror', 'radial', 'tilted'][bytes[3] % 4]],
+        ['Texture', ['smooth', 'grainy', 'glowing', 'fractured'][bytes[4] % 4]],
+        ['Signature', state.hashA.slice(-12).toUpperCase()]
+      ];
+      els.dnaList.innerHTML = items.map(([k, v]) => `<div class="dna-item"><div class="dna-key">${escapeHtml(k)}</div><div class="dna-val">${escapeHtml(v)}</div></div>`).join('');
+    }
+
+    function compareHashes(a, b) {
+      if (!a || !b) return { bits: 0, hex: 0, percent: 0 };
+      const ab = hashToBytes(a), bb = hashToBytes(b);
+      let bits = 0, hex = 0;
+      for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) hex++;
+      for (let i = 0; i < Math.min(ab.length, bb.length); i++) bits += popcount(ab[i] ^ bb[i]);
+      return { bits, hex, percent: Math.round(bits / 256 * 100) };
+    }
+
+    function randomPhrase() {
+      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+      if (state.mode === 'file') updateMode('solo');
+      els.inputA.value = phrase;
+      if (state.mode === 'compare') els.inputB.value = phrase + '!';
+      generate();
+    }
+
+    function mutationTest() {
+      if (state.mode === 'file') updateMode('solo');
+      const original = els.inputA.value.trim() || 'tiny mutation, giant avalanche';
+      els.inputA.value = original;
+      els.inputB.value = mutateText(original);
+      updateMode('compare');
+      showToast('Mutation test loaded');
+    }
+
+    function mutateText(text) {
+      if (!text) return '!';
+      const last = text[text.length - 1];
+      if (last === '!') return text.slice(0, -1) + '.';
+      if (last === '.') return text.slice(0, -1) + '!';
+      return text + '!';
+    }
+
+    async function loadFile(file) {
+      if (!file) return;
+      setStatus('reading file');
+      const buffer = await file.arrayBuffer();
+      state.fileBytes = new Uint8Array(buffer);
+      state.fileName = file.name;
+      els.fileMeta.textContent = `${file.name} · ${formatBytes(file.size)}`;
+      updateMode('file');
+      showToast('File hashed in browser');
+    }
+
+    async function copyHash() {
+      const text = state.mode === 'compare' ? `A: ${state.hashA}\nB: ${state.hashB}` : state.hashA;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Hash copied');
+      } catch (err) {
+        fallbackCopy(text);
+      }
+    }
+
+    function downloadPNG() {
+      draw();
+      const a = document.createElement('a');
+      const label = state.mode === 'compare' ? 'comparison' : state.mode === 'file' ? safeName(state.fileName || 'file') : 'text';
+      a.download = `shart_${label}_${state.hashA.slice(0, 10)}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      showToast('PNG exported');
+    }
+
+    function savePrint() {
+      draw();
+      const thumb = document.createElement('canvas');
+      thumb.width = 240; thumb.height = 240;
+      const tc = thumb.getContext('2d');
+      tc.drawImage(canvas, 0, 0, thumb.width, thumb.height);
+      const item = {
+        hash: state.hashA,
+        style: els.styleSelect.value,
+        mode: state.mode,
+        label: state.mode === 'file' ? (state.fileName || 'file') : els.inputA.value.slice(0, 28),
+        img: thumb.toDataURL('image/jpeg', 0.82),
+        when: Date.now()
+      };
+      state.gallery.unshift(item);
+      state.gallery = state.gallery.slice(0, 12);
+      localStorage.setItem('shartGalleryV2', JSON.stringify(state.gallery));
+      renderGallery();
+      showToast('Saved to local gallery');
+    }
+
+    function loadGallery() {
+      try { state.gallery = JSON.parse(localStorage.getItem('shartGalleryV2') || '[]'); } catch { state.gallery = []; }
+      renderGallery();
+    }
+
+    function renderGallery() {
+      if (!state.gallery.length) {
+        els.gallery.innerHTML = '<p class="tiny" style="grid-column:1/-1;margin:0;">No saved prints yet.</p>';
+        return;
+      }
+      els.gallery.innerHTML = '';
+      state.gallery.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'thumb';
+        btn.title = item.hash;
+        btn.innerHTML = `<img alt="Saved hashprint" src="${item.img}"><span>${escapeHtml(item.hash.slice(0, 10))}</span>`;
+        btn.addEventListener('click', () => {
+          els.inputA.value = item.label || item.hash;
+          els.styleSelect.value = item.style || 'cathedral';
+          updateMode('solo');
+          state.hashA = item.hash;
+          updateHashPanels();
+          drawHashArt(ctx, state.hashA, els.styleSelect.value, 0, 0, canvas.width, canvas.height, 'SAVED');
+          showToast('Saved print previewed');
+        });
+        els.gallery.appendChild(btn);
+      });
+    }
+
+    function clearGallery() {
+      state.gallery = [];
+      localStorage.removeItem('shartGalleryV2');
+      renderGallery();
+      showToast('Gallery cleared');
+    }
+
+    function resetApp() {
+      els.inputA.value = 'Type something small. Then change one letter.';
+      els.inputB.value = 'Type something small. Then change one letter!';
+      state.fileBytes = null; state.fileName = '';
+      els.fileInput.value = ''; els.fileMeta.textContent = 'No file loaded yet.';
+      els.styleSelect.value = 'cathedral';
+      updateMode('solo');
+      showToast('Reset');
+    }
+
+    function makePalette(bytes) {
+      const hue = (bytes[0] / 255) * 360;
+      return {
+        hue,
+        bg: `hsl(${(hue + 225) % 360}, 54%, 5%)`,
+        bg2: `hsl(${(hue + 260) % 360}, 52%, 12%)`,
+        glow: hsla((hue + 30) % 360, 96, 60, 0.36),
+        a: hsla(hue, 92, 62, 0.82),
+        b: hsla((hue + 52 + bytes[1] / 3) % 360, 88, 58, 0.82),
+        c: hsla((hue + 142 + bytes[2] / 4) % 360, 84, 62, 0.82),
+        d: hsla((hue + 216 + bytes[3] / 5) % 360, 90, 65, 0.82),
+        e: hsla((hue + 300 + bytes[4] / 6) % 360, 92, 60, 0.82)
+      };
+    }
+
+    function sha256Text(text) { return sha256Bytes(utf8Bytes(text)); }
+
+    function utf8Bytes(str) { return new TextEncoder().encode(str); }
+
+    function sha256Bytes(bytes) {
+      const K = [
+        0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+        0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+        0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+        0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+        0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+        0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+        0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+        0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+      ];
+      let H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+      const l = bytes.length;
+      const bitLenHi = Math.floor(l / 0x20000000);
+      const bitLenLo = (l << 3) >>> 0;
+      const withOne = l + 1;
+      const padLen = (withOne % 64 <= 56) ? (56 - withOne % 64) : (120 - withOne % 64);
+      const msg = new Uint8Array(withOne + padLen + 8);
+      msg.set(bytes, 0); msg[l] = 0x80;
+      const dv = new DataView(msg.buffer);
+      dv.setUint32(msg.length - 8, bitLenHi, false);
+      dv.setUint32(msg.length - 4, bitLenLo, false);
+      const W = new Uint32Array(64);
+      for (let offset = 0; offset < msg.length; offset += 64) {
+        for (let i = 0; i < 16; i++) W[i] = dv.getUint32(offset + i * 4, false);
+        for (let i = 16; i < 64; i++) {
+          const s0 = rotr(W[i-15], 7) ^ rotr(W[i-15], 18) ^ (W[i-15] >>> 3);
+          const s1 = rotr(W[i-2], 17) ^ rotr(W[i-2], 19) ^ (W[i-2] >>> 10);
+          W[i] = (W[i-16] + s0 + W[i-7] + s1) >>> 0;
+        }
+        let [a,b,c,d,e,f,g,h] = H;
+        for (let i = 0; i < 64; i++) {
+          const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+          const ch = (e & f) ^ (~e & g);
+          const temp1 = (h + S1 + ch + K[i] + W[i]) >>> 0;
+          const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+          const maj = (a & b) ^ (a & c) ^ (b & c);
+          const temp2 = (S0 + maj) >>> 0;
+          h = g; g = f; f = e; e = (d + temp1) >>> 0; d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
+        }
+        H = H.map((v, i) => (v + [a,b,c,d,e,f,g,h][i]) >>> 0);
+      }
+      return H.map(v => v.toString(16).padStart(8, '0')).join('');
+    }
+
+    function rotr(x, n) { return (x >>> n) | (x << (32 - n)); }
+    function popcount(x) { x = x - ((x >>> 1) & 0x55); x = (x & 0x33) + ((x >>> 2) & 0x33); return (((x + (x >>> 4)) & 0x0F) * 0x01); }
+
+    function hashToBytes(hash) {
+      const bytes = [];
+      for (let i = 0; i < hash.length; i += 2) bytes.push(parseInt(hash.slice(i, i + 2), 16));
+      return bytes;
+    }
+
+    function mulberry32(seed) {
+      return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function hsla(h, s, l, a) { return `hsla(${h}, ${s}%, ${l}%, ${a})`; }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    function roundRect(c, x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      c.beginPath();
+      c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+    }
+
+    function debounce(fn, delay) {
+      let timer;
+      return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
+    }
+
+    function setStatus(text) { els.statusText.textContent = text; }
+
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => els.toast.classList.remove('show'), 1350);
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      showToast('Hash copied');
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
+    }
+
+    function safeName(name) { return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'hashprint'; }
+
+    function escapeHtml(value) {
+      return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+  </script>
+</body>
+</html>
